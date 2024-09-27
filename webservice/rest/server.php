@@ -52,7 +52,9 @@ die;
 function raise_early_ws_exception(Exception $ex): void {
     global $CFG;
     require_once("$CFG->dirroot/webservice/rest/locallib.php");
+    $server->send_headers();
     $server = new webservice_rest_server(WEBSERVICE_AUTHMETHOD_PERMANENT_TOKEN);
     $server->set_rest_format();
     $server->exception_handler($ex);
+    
 }

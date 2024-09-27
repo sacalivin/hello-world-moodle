@@ -36,7 +36,8 @@ require_once("$CFG->dirroot/webservice/lib.php");
  * @copyright  2009 Petr Skoda (skodak)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class webservice_rest_server extends webservice_base_server {
+class webservice_rest_server extends webservice_base_server
+{
 
     /** @var string return method ('xml' or 'json') */
     protected $restformat;
@@ -47,7 +48,8 @@ class webservice_rest_server extends webservice_base_server {
      * @param string $authmethod authentication method of the web service (WEBSERVICE_AUTHMETHOD_PERMANENT_TOKEN, ...)
      * @param string $restformat Format of the return values: 'xml' or 'json'
      */
-    public function __construct($authmethod) {
+    public function __construct($authmethod)
+    {
         parent::__construct($authmethod);
         $this->wsname = 'rest';
     }
@@ -55,13 +57,14 @@ class webservice_rest_server extends webservice_base_server {
     /**
      * Set the request format to.
      */
-    public function set_rest_format(): void {
+    public function set_rest_format(): void
+    {
         // Get GET and POST parameters.
         $methodvariables = array_merge($_GET, $_POST);
 
         // Retrieve REST format parameter - 'xml' (default) or 'json'.
         $restformatisset = isset($methodvariables['moodlewsrestformat'])
-                && (($methodvariables['moodlewsrestformat'] == 'xml' || $methodvariables['moodlewsrestformat'] == 'json'));
+            && (($methodvariables['moodlewsrestformat'] == 'xml' || $methodvariables['moodlewsrestformat'] == 'json'));
         $this->restformat = $restformatisset ? $methodvariables['moodlewsrestformat'] : 'xml';
     }
 
@@ -74,7 +77,8 @@ class webservice_rest_server extends webservice_base_server {
      *  4/ text format parameters
      *  5/ return rest format xml/json
      */
-    protected function parse_request() {
+    protected function parse_request()
+    {
 
         // Retrieve and clean the POST/GET parameters from the parameters specific to the server.
         parent::set_web_service_call_settings();
@@ -95,7 +99,6 @@ class webservice_rest_server extends webservice_base_server {
             unset($methodvariables['wsfunction']);
 
             $this->parameters = $methodvariables;
-
         } else {
             $this->token = isset($methodvariables['wstoken']) ? $methodvariables['wstoken'] : null;
             unset($methodvariables['wstoken']);
@@ -111,7 +114,8 @@ class webservice_rest_server extends webservice_base_server {
      * Send the result of function call to the WS client
      * formatted as XML document.
      */
-    protected function send_response() {
+    protected function send_response()
+    {
 
         //Check that the returned values are valid
         try {
@@ -134,10 +138,10 @@ class webservice_rest_server extends webservice_base_server {
             if ($this->restformat == 'json') {
                 $response = json_encode($validatedvalues);
             } else {
-                $response = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
-                $response .= '<RESPONSE>'."\n";
+                $response = '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
+                $response .= '<RESPONSE>' . "\n";
                 $response .= self::xmlize_result($validatedvalues, $this->function->returns_desc);
-                $response .= '</RESPONSE>'."\n";
+                $response .= '</RESPONSE>' . "\n";
             }
         }
 
@@ -152,14 +156,15 @@ class webservice_rest_server extends webservice_base_server {
      *       it only matches the abstract function declaration.
      * @param exception $ex the exception that we are sending
      */
-    protected function send_error($ex=null) {
+    protected function send_error($ex = null)
+    {
         // Unless debugging is completely off, log the error to server error log.
         if (debugging('', DEBUG_MINIMAL)) {
             $info = get_exception_info($ex);
             // This format is the same as default_exception_handler() in setuplib.php but with the
             // word 'REST' instead of 'Default', to make it easy to reuse any existing processing.
             error_log('REST exception handler: ' . $info->message . ' Debug: ' .
-                    $info->debuginfo . "\n" . format_backtrace($info->backtrace, true));
+                $info->debuginfo . "\n" . format_backtrace($info->backtrace, true));
         }
 
         $this->send_headers();
@@ -171,7 +176,8 @@ class webservice_rest_server extends webservice_base_server {
      * @param exception $ex the exception we are converting in the server rest format
      * @return string the error in the requested REST format
      */
-    protected function generate_error($ex) {
+    protected function generate_error($ex)
+    {
         if ($this->restformat == 'json') {
             $errorobject = new stdClass;
             $errorobject->exception = get_class($ex);
@@ -184,17 +190,17 @@ class webservice_rest_server extends webservice_base_server {
             }
             $error = json_encode($errorobject);
         } else {
-            $error = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
-            $error .= '<EXCEPTION class="'.get_class($ex).'">'."\n";
+            $error = '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
+            $error .= '<EXCEPTION class="' . get_class($ex) . '">' . "\n";
             if (isset($ex->errorcode)) {
                 $error .= '<ERRORCODE>' . htmlspecialchars($ex->errorcode, ENT_COMPAT, 'UTF-8')
-                        . '</ERRORCODE>' . "\n";
+                    . '</ERRORCODE>' . "\n";
             }
-            $error .= '<MESSAGE>'.htmlspecialchars($ex->getMessage(), ENT_COMPAT, 'UTF-8').'</MESSAGE>'."\n";
+            $error .= '<MESSAGE>' . htmlspecialchars($ex->getMessage(), ENT_COMPAT, 'UTF-8') . '</MESSAGE>' . "\n";
             if (debugging() and isset($ex->debuginfo)) {
-                $error .= '<DEBUGINFO>'.htmlspecialchars($ex->debuginfo, ENT_COMPAT, 'UTF-8').'</DEBUGINFO>'."\n";
+                $error .= '<DEBUGINFO>' . htmlspecialchars($ex->debuginfo, ENT_COMPAT, 'UTF-8') . '</DEBUGINFO>' . "\n";
             }
-            $error .= '</EXCEPTION>'."\n";
+            $error .= '</EXCEPTION>' . "\n";
         }
         return $error;
     }
@@ -202,7 +208,8 @@ class webservice_rest_server extends webservice_base_server {
     /**
      * Internal implementation - sending of page headers.
      */
-    protected function send_headers() {
+    public function send_headers()
+    {
         if ($this->restformat == 'json') {
             header('Content-type: application/json');
         } else {
@@ -210,12 +217,14 @@ class webservice_rest_server extends webservice_base_server {
             header('Content-Disposition: inline; filename="response.xml"');
         }
         header('Cache-Control: private, must-revalidate, pre-check=0, post-check=0, max-age=0');
-        header('Expires: '. gmdate('D, d M Y H:i:s', 0) .' GMT');
+        header('Expires: ' . gmdate('D, d M Y H:i:s', 0) . ' GMT');
         header('Pragma: no-cache');
         header('Accept-Ranges: none');
         // Allow cross-origin requests only for Web Services.
         // This allow to receive requests done by Web Workers or webapps in different domains.
-        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Origin', '*');
+        header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, X-Token-Auth, Authorization');
     }
 
     /**
@@ -225,38 +234,36 @@ class webservice_rest_server extends webservice_base_server {
      * @param external_description $desc
      * @return string
      */
-    protected static function xmlize_result($returns, $desc) {
+    protected static function xmlize_result($returns, $desc)
+    {
         if ($desc === null) {
             return '';
-
         } else if ($desc instanceof external_value) {
             if (is_bool($returns)) {
                 // we want 1/0 instead of true/false here
                 $returns = (int)$returns;
             }
             if (is_null($returns)) {
-                return '<VALUE null="null"/>'."\n";
+                return '<VALUE null="null"/>' . "\n";
             } else {
-                return '<VALUE>'.htmlspecialchars($returns, ENT_COMPAT, 'UTF-8').'</VALUE>'."\n";
+                return '<VALUE>' . htmlspecialchars($returns, ENT_COMPAT, 'UTF-8') . '</VALUE>' . "\n";
             }
-
         } else if ($desc instanceof external_multiple_structure) {
-            $mult = '<MULTIPLE>'."\n";
+            $mult = '<MULTIPLE>' . "\n";
             if (!empty($returns)) {
                 foreach ($returns as $val) {
                     $mult .= self::xmlize_result($val, $desc->content);
                 }
             }
-            $mult .= '</MULTIPLE>'."\n";
+            $mult .= '</MULTIPLE>' . "\n";
             return $mult;
-
         } else if ($desc instanceof external_single_structure) {
-            $single = '<SINGLE>'."\n";
-            foreach ($desc->keys as $key=>$subdesc) {
+            $single = '<SINGLE>' . "\n";
+            foreach ($desc->keys as $key => $subdesc) {
                 $value = isset($returns[$key]) ? $returns[$key] : null;
-                $single .= '<KEY name="'.$key.'">'.self::xmlize_result($value, $subdesc).'</KEY>'."\n";
+                $single .= '<KEY name="' . $key . '">' . self::xmlize_result($value, $subdesc) . '</KEY>' . "\n";
             }
-            $single .= '</SINGLE>'."\n";
+            $single .= '</SINGLE>' . "\n";
             return $single;
         }
     }
@@ -270,7 +277,8 @@ class webservice_rest_server extends webservice_base_server {
  * @copyright  2009 Petr Skoda (skodak)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class webservice_rest_test_client implements webservice_test_client_interface {
+class webservice_rest_test_client implements webservice_test_client_interface
+{
     /**
      * Execute test client WS request
      * @param string $serverurl server url (including token parameter or username/password parameters)
@@ -278,7 +286,8 @@ class webservice_rest_test_client implements webservice_test_client_interface {
      * @param array $params parameters of the called function
      * @return mixed
      */
-    public function simpletest($serverurl, $function, $params) {
-        return download_file_content($serverurl.'&wsfunction='.$function, null, $params);
+    public function simpletest($serverurl, $function, $params)
+    {
+        return download_file_content($serverurl . '&wsfunction=' . $function, null, $params);
     }
 }
